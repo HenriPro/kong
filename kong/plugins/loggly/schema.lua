@@ -6,6 +6,13 @@ local severity = {
   one_of = { "debug", "info", "notice", "warning", "err", "crit", "alert", "emerg" },
 }
 
+-- kong-ee
+-- encrypt key, if configured. This is available in Kong Enterprise:
+-- https://docs.konghq.com/gateway/2.6.x/plan-and-deploy/security/db-encryption/
+local ok, enabled = pcall(function() return kong.configuration.keyring_enabled end)
+local ENCRYPTED = ok and enabled or nil
+-- /kong-ee
+
 return {
   name = "loggly",
   fields = {
@@ -15,7 +22,7 @@ return {
         fields = {
           { host = typedefs.host({ default = "logs-01.loggly.com" }), },
           { port = typedefs.port({ default = 514 }), },
-          { key = { type = "string", required = true }, },
+          { key = { type = "string", required = true, encrypted = ENCRYPTED }, },
           { tags = {
               type = "set",
               default = { "kong" },

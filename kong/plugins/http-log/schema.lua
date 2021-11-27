@@ -1,6 +1,13 @@
 local typedefs = require "kong.db.schema.typedefs"
 local url = require "socket.url"
 
+-- kong-ee
+-- encrypt http_endpoint, if configured. This is available in Kong Enterprise
+-- https://docs.konghq.com/gateway/2.6.x/plan-and-deploy/security/db-encryption/
+local ok, enabled = pcall(function() return kong.configuration.keyring_enabled end)
+local ENCRYPTED = ok and enabled or nil
+-- /kong-ee
+
 return {
   name = "http-log",
   fields = {
@@ -9,7 +16,7 @@ return {
         type = "record",
         fields = {
           -- NOTE: any field added here must be also included in the handler's get_queue_id method
-          { http_endpoint = typedefs.url({ required = true }) },
+          { http_endpoint = typedefs.url({ required = true }), encrypted = ENCRYPTED },
           { method = { type = "string", default = "POST", one_of = { "POST", "PUT", "PATCH" }, }, },
           { content_type = { type = "string", default = "application/json", one_of = { "application/json" }, }, },
           { timeout = { type = "number", default = 10000 }, },

@@ -1,5 +1,12 @@
 local typedefs = require "kong.db.schema.typedefs"
 
+-- kong-ee
+-- encrypt account_email, eab_kid and eab_hmac_key, if configured. This is available in Kong Enterprise:
+-- https://docs.konghq.com/gateway/2.6.x/plan-and-deploy/security/db-encryption/
+local ok, enabled = pcall(function() return kong.configuration.keyring_enabled end)
+local ENCRYPTED = ok and enabled or nil
+-- /kong-ee
+
 local CERT_TYPES = { "rsa", "ecc" }
 
 local STORAGE_TYPES = { "kong", "shm", "redis", "consul", "vault" }
@@ -64,6 +71,7 @@ local schema = {
           -- very loose validation for basic sanity test
           match = "%w*%p*@+%w*%.?%w*",
           required = true,
+          encrypted = ENCRYPTED,
         }, },
         { api_uri = typedefs.url({ default = "https://acme-v02.api.letsencrypt.org/directory" }),
         },
@@ -73,9 +81,12 @@ local schema = {
         }, },
         { eab_kid = {
           type = "string",
+          encrypted = ENCRYPTED,
         }, },
         { eab_hmac_key = {
           type = "string",
+          encrypted = ENCRYPTED,
+        }, },
         }, },
         -- Kong doesn't support multiple certificate chains yet
         { cert_type = {

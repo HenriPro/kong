@@ -2,6 +2,12 @@ local typedefs = require "kong.db.schema.typedefs"
 local Schema = require "kong.db.schema"
 local utils = require "kong.tools.utils"
 
+-- kong-ee
+-- symmetrically encrypt secret, if configured. This is available in Kong Enterprise:
+-- https://docs.konghq.com/gateway/2.6.x/plan-and-deploy/security/db-encryption/
+local ok, enabled = pcall(function() return kong.configuration.keyring_enabled end)
+local ENCRYPTED = ok and enabled or nil
+-- /kong-ee
 
 local char = string.char
 local rand = math.random
@@ -42,6 +48,7 @@ return {
               type = "string",
               required = false,
               default = random_string(),
+              encrypted = ENCRYPTED,
             },
           },
           { cookie_name = { type = "string", default = "session" } },
